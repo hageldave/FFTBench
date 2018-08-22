@@ -31,13 +31,14 @@
 
 package com.github.hageldave.fftbenchmark;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.IntStream;
 
-import org.jtransforms.fft.DoubleFFT_1D;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Fork;
+import org.openjdk.jmh.annotations.Measurement;
 import org.openjdk.jmh.annotations.Mode;
 import org.openjdk.jmh.annotations.Param;
 import org.openjdk.jmh.annotations.Scope;
@@ -45,83 +46,81 @@ import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.Warmup;
 
-import hageldave.ezfftw.dp.FFT;
-import hageldave.ezfftw.dp.FFTW_Guru;
-import hageldave.ezfftw.dp.NativeRealArray;
+import com.github.hageldave.fftbenchmark.interfaces.FFT1D;
 
 @State(Scope.Benchmark)
 @BenchmarkMode(Mode.AverageTime)
-@Warmup(iterations = 3, time = 10, timeUnit = TimeUnit.SECONDS)
-@Fork(value=2)
+@Measurement(iterations = 3, time = 10, timeUnit = TimeUnit.SECONDS)
+@Warmup(iterations = 2, time = 10, timeUnit = TimeUnit.SECONDS)
+@Fork(value=1)
 public class FFT1dBenchmark {
 
-	//	public static void main(String[] args) throws Exception {
-	//		Main.main(args);
-	//	}
-
+	private static final int NUM_THREADS = 16;
+	
 	@Param({
-		"64",
-		"511",
-		"2048",
-		"16385",
-		"1048576",
-		"4194305"
+		"512",
+		"1536",
+		"16384",
+		"98304",
+		"589829"
 	})
 	public int size=0;
-
-	public double[] toTransform;
-	public double[] toTransformJT;
-	DoubleFFT_1D jt;
-	NativeRealArray in;
-	NativeRealArray rout;
-	NativeRealArray iout;
+	
+	@Param({
+//		"JTransforms",
+		"ezFFTW"
+	})
+	public String implementation="";
+	
+	private FFT1D fft_test;
+	private double[] toTransform;
+	private double[] result;
+	private ArrayList<Double> listToTransform;
+	private ArrayList<Double> listResult;
+	private double[][] multipleToTransform;
+	private double[][] multipleResult;
 
 	@Setup
 	public void setup(){
+		fft_test = Implementations.valueOf(implementation).fft1d;
 		toTransform = new double[size];
-		for(int i=0; i<size;i++)
-			toTransform[i] = (Math.sin(i)+Math.cos(i+1)+Math.sin(i*2)+Math.cos(i*2+1));
-		// jtransform setup
-		toTransformJT = Arrays.copyOf(toTransform, size*2);
-		jt = new DoubleFFT_1D(size);
-
-		// ezfftw setup
-		in = new NativeRealArray(size);
-		in.set(toTransform);
-		rout = new NativeRealArray(size);
-		iout = new NativeRealArray(size);
+		result = new double[size];
+		listToTransform = new ArrayList<>(size*2/3);
+		listResult = new ArrayList<>(size*2/3);
+		multipleToTransform = new double[NUM_THREADS][size];
+		multipleResult = new double[NUM_THREADS][size];
+		for(int i=0;i<size;i++){
+			toTransform[i] = i*0.01+Math.sin(i);
+			listToTransform.add(toTransform[i]);
+			for(int j=0;j<NUM_THREADS;j++){
+				multipleToTransform[j][i] = toTransform[i];
+			}
+		}
 	}
 
+//	@Benchmark
+//	public double arrayInput() {
+//		fft_test.doubleArrayFFT_SetDC2Zero_1D(toTransform, result);
+//		return result[size-1];
+//	}
+//	
+//	@Benchmark
+//	public double listInput() {
+//		try{
+//			fft_test.doubleListFFT_SetDC2Zero_1D(listToTransform, listResult);
+//			return listResult.get(size-1);
+//		} finally {
+//			listResult.clear();
+//		}
+//	}
+	
 	@Benchmark
-	public void pureFFT_JT() {
-		jt.realForwardFull(toTransformJT);
-		jt.realInverseFull(toTransformJT, false);
-	}
-
-	@Benchmark
-	public void pureFFT_EZ() {
-		FFTW_Guru.execute_split_r2c(in, rout, iout, size);
-		FFTW_Guru.execute_split_c2r(rout, iout, in, size);
-	}
-
-	@Benchmark
-	public double[] fftWithPrep_JT() {
-		double[] input = Arrays.copyOf(toTransform, size*2);
-		DoubleFFT_1D fft = new DoubleFFT_1D(size);
-		fft.realForwardFull(input);
-		/* processing in fourier space would be here */
-		fft.realInverseFull(input, false);
-		return input;
-	}
-
-	@Benchmark
-	public double[] fftWithPrep_EZ() {
-		double[] rOut = new double[size];
-		double[] iOut = new double[size];
-		FFT.fft(toTransform, rOut, iOut, size);
-		/* processing in fourier space would be here */
-		FFT.ifft(rOut, iOut, toTransform, size);
-		return toTransform;
+	public double parallelInvocations() {
+		fft_test.doubleArrayFFT_SetDC2Zero_1D(toTransform, result);
+		IntStream.range(0, NUM_THREADS).parallel().forEach((int i)->{
+			fft_test.doubleArrayFFT_SetDC2Zero_1D(multipleToTransform[i], multipleResult[i]);
+		});
+		return multipleResult[NUM_THREADS/2][size-1];
 	}
 
 }
