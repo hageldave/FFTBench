@@ -64,7 +64,7 @@ public class FFT1dBenchmark {
 		"98304",
 		"589829"
 	})
-	public int size=0;
+	public int dims=0;
 	
 	@Param({
 		"JTransforms",
@@ -79,9 +79,11 @@ public class FFT1dBenchmark {
 	private ArrayList<Double> listResult;
 	private double[][] multipleToTransform;
 	private double[][] multipleResult;
+	private int size=0;
 
 	@Setup
 	public void setup(){
+		size=dims;
 		fft_test = Implementations.valueOf(implementation).fft1d;
 		toTransform = new double[size];
 		result = new double[size];
