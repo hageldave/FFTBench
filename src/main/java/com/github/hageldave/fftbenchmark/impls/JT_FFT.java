@@ -1,4 +1,4 @@
-package com.github.hageldave.fftbenchmark;
+package com.github.hageldave.fftbenchmark.impls;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -6,6 +6,7 @@ import java.util.Arrays;
 import org.jtransforms.fft.DoubleFFT_1D;
 import org.jtransforms.fft.DoubleFFT_2D;
 import org.jtransforms.fft.DoubleFFT_3D;
+import org.jtransforms.fft.FloatFFT_3D;
 
 import com.github.hageldave.fftbenchmark.interfaces.FFT1D;
 import com.github.hageldave.fftbenchmark.interfaces.FFT2D;
@@ -63,9 +64,9 @@ public class JT_FFT implements FFT1D,FFT2D,FFT3D {
 	}
 	
 	@Override
-	public void doubleArrayFFT_SetDC2Zero_3D(double[] array, double[] result, int width, int height, int depth) {
-		DoubleFFT_3D fft = new DoubleFFT_3D(depth, height, width);
-		double[] transform = Arrays.copyOf(array, width*height*depth*2);
+	public void doubleArrayFFT_SetDC2Zero_3D(float[] array, float[] result, int width, int height, int depth) {
+		FloatFFT_3D fft = new FloatFFT_3D(depth, height, width);
+		float[] transform = Arrays.copyOf(array, width*height*depth*2);
 		fft.realForwardFull(transform);
 		transform[0]=0;
 		fft.complexInverse(transform, false);
@@ -73,10 +74,10 @@ public class JT_FFT implements FFT1D,FFT2D,FFT3D {
 	}
 
 	@Override
-	public void double3DArrayFFT_SetDC2Zero_3D(double[][][] array, double[][][] result, int width, int height,
+	public void double3DArrayFFT_SetDC2Zero_3D(float[][][] array, float[][][] result, int width, int height,
 			int depth) {
-		DoubleFFT_3D fft = new DoubleFFT_3D(depth, height, width);
-		double[] transform = new double[width*height*depth*2];
+		FloatFFT_3D fft = new FloatFFT_3D(depth, height, width);
+		float[] transform = new float[width*height*depth*2];
 		int sliceStride = width*height;
 		for(int k = 0; k < depth; k++)
 			for(int i = 0; i < height; i++)

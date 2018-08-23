@@ -1,4 +1,4 @@
-package com.github.hageldave.fftbenchmark;
+package com.github.hageldave.fftbenchmark.impls;
 
 import java.util.ArrayList;
 
@@ -65,20 +65,20 @@ public class EZ_FFT implements FFT1D,FFT2D,FFT3D {
 	}
 
 	@Override
-	public void doubleArrayFFT_SetDC2Zero_3D(double[] array, double[] result, int width, int height, int depth) {
-		double[] complex_r = new double[array.length];
-		double[] complex_i = new double[array.length];
-		FFT.fft(array, complex_r, complex_i, width,height,depth);
+	public void doubleArrayFFT_SetDC2Zero_3D(float[] array, float[] result, int width, int height, int depth) {
+		float[] complex_r = new float[array.length];
+		float[] complex_i = new float[array.length];
+		hageldave.ezfftw.fp.FFT.fft(array, complex_r, complex_i, width,height,depth);
 		complex_r[0]=0;
-		FFT.ifft(complex_r, complex_i, result, width,height,depth);
+		hageldave.ezfftw.fp.FFT.ifft(complex_r, complex_i, result, width,height,depth);
 	}
 
 	@Override
-	public void double3DArrayFFT_SetDC2Zero_3D(double[][][] array, double[][][] result, int width, int height,
+	public void double3DArrayFFT_SetDC2Zero_3D(float[][][] array, float[][][] result, int width, int height,
 			int depth) {
-		RowMajorArrayAccessor complex_r = new RowMajorArrayAccessor(width,height,depth);
-		RowMajorArrayAccessor complex_i = new RowMajorArrayAccessor(width,height,depth);
-		FFT.fft(
+		hageldave.ezfftw.fp.RowMajorArrayAccessor complex_r = new hageldave.ezfftw.fp.RowMajorArrayAccessor(width,height,depth);
+		hageldave.ezfftw.fp.RowMajorArrayAccessor complex_i = new hageldave.ezfftw.fp.RowMajorArrayAccessor(width,height,depth);
+		hageldave.ezfftw.fp.FFT.fft(
 				(long[] indices)->array[(int)indices[2]][(int)indices[1]][(int)indices[0]], 
 				complex_r.combineToComplexWriter(complex_i), 
 				width,
@@ -86,9 +86,9 @@ public class EZ_FFT implements FFT1D,FFT2D,FFT3D {
 				depth
 		);
 		complex_r.array[0]=0;
-		FFT.ifft(
+		hageldave.ezfftw.fp.FFT.ifft(
 				complex_r.combineToComplexSampler(complex_i), 
-				(double v, long[] indices) -> result[(int)indices[2]][(int)indices[1]][(int)indices[0]]=v,
+				(float v, long[] indices) -> result[(int)indices[2]][(int)indices[1]][(int)indices[0]]=v,
 				width,
 				height,
 				depth

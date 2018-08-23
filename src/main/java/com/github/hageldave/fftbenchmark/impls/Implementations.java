@@ -1,4 +1,4 @@
-package com.github.hageldave.fftbenchmark;
+package com.github.hageldave.fftbenchmark.impls;
 
 import com.github.hageldave.fftbenchmark.interfaces.FFT1D;
 import com.github.hageldave.fftbenchmark.interfaces.FFT2D;

@@ -31,7 +31,6 @@
 
 package com.github.hageldave.fftbenchmark;
 
-import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 
@@ -47,25 +46,23 @@ import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.Warmup;
 
 import com.github.hageldave.fftbenchmark.impls.Implementations;
-import com.github.hageldave.fftbenchmark.interfaces.FFT1D;
+import com.github.hageldave.fftbenchmark.interfaces.FFT3D;
 
 @State(Scope.Benchmark)
 @BenchmarkMode(Mode.AverageTime)
 @Measurement(iterations = 3, time = 10, timeUnit = TimeUnit.SECONDS)
 @Warmup(iterations = 2, time = 10, timeUnit = TimeUnit.SECONDS)
-@Fork(value=1)
-public class FFT1dBenchmark {
+@Fork(value=1, jvmArgsAppend={"-Xmx6g","-Xms3g"})
+public class FFT3dBenchmark {
 
-	private static final int NUM_THREADS = 16;
+	private static final int NUM_THREADS = 4;
 	
 	@Param({
-		"512",
-		"1536",
-		"16384",
-		"98304",
-		"589829"
+		"127x128x129",
+		"400x300x200",
+		"512x512x512",
 	})
-	public int dims=0;
+	public String dims="";
 	
 	@Param({
 		"JTransforms",
@@ -73,57 +70,51 @@ public class FFT1dBenchmark {
 	})
 	public String implementation="";
 	
-	private FFT1D fft_test;
-	private double[] toTransform;
-	private double[] result;
-	private ArrayList<Double> listToTransform;
-	private ArrayList<Double> listResult;
-	private double[][] multipleToTransform;
-	private double[][] multipleResult;
+	private int width=0;
+	private int height=0;
+	private int depth=0;
 	private int size=0;
+	private FFT3D fft_test;
+	private float[] toTransform;
+	private float[] result;
+	private float[][][] toTransformNested;
+	private float[][][] resultNested;
 
 	@Setup
 	public void setup(){
-		size=dims;
-		fft_test = Implementations.valueOf(implementation).fft1d;
-		toTransform = new double[size];
-		result = new double[size];
-		listToTransform = new ArrayList<>(size*2/3);
-		listResult = new ArrayList<>(size*2/3);
-		multipleToTransform = new double[NUM_THREADS][size];
-		multipleResult = new double[NUM_THREADS][size];
-		for(int i=0;i<size;i++){
-			toTransform[i] = i*0.01+Math.sin(i);
-			listToTransform.add(toTransform[i]);
-			for(int j=0;j<NUM_THREADS;j++){
-				multipleToTransform[j][i] = toTransform[i];
-			}
-		}
+		fft_test = Implementations.valueOf(implementation).fft3d;
+		String[] dimstr = dims.split("x");
+		width = Integer.parseInt(dimstr[0]);
+		height = Integer.parseInt(dimstr[1]);
+		depth = Integer.parseInt(dimstr[2]);
+		size = width*height*depth;
+		
+		toTransform = new float[size];
+		result = new float[size];
+		
+		toTransformNested = new float[depth][height][width];
+		resultNested = new float[depth][height][width];
 	}
 
 	@Benchmark
-	public double arrayInput() {
-		fft_test.doubleArrayFFT_SetDC2Zero_1D(toTransform, result);
+	public double singleArrayInput() {
+		fft_test.doubleArrayFFT_SetDC2Zero_3D(toTransform, result, width, height, depth);
 		return result[size-1];
 	}
 	
 	@Benchmark
-	public double listInput() {
-		try{
-			fft_test.doubleListFFT_SetDC2Zero_1D(listToTransform, listResult);
-			return listResult.get(size-1);
-		} finally {
-			listResult.clear();
-		}
+	public double nestedArrayInput() {
+		fft_test.double3DArrayFFT_SetDC2Zero_3D(toTransformNested, resultNested, width, height, depth);
+		return resultNested[0][0][0];
 	}
 	
 	@Benchmark
 	public double parallelInvocations() {
-		fft_test.doubleArrayFFT_SetDC2Zero_1D(toTransform, result);
+		fft_test.doubleArrayFFT_SetDC2Zero_3D(toTransform, result, width, height, depth);
 		IntStream.range(0, NUM_THREADS).parallel().forEach((int i)->{
-			fft_test.doubleArrayFFT_SetDC2Zero_1D(multipleToTransform[i], multipleResult[i]);
+			fft_test.doubleArrayFFT_SetDC2Zero_3D(toTransform, result, width, height, depth);
 		});
-		return multipleResult[NUM_THREADS/2][size-1];
+		return result[size-1];
 	}
 
 }
