@@ -63,7 +63,8 @@ public class FFT1dBenchmark {
 		"1536",
 		"16384",
 		"98304",
-		"589829"
+		"589829",
+		"1000000"
 	})
 	public int dims=0;
 	
@@ -78,8 +79,6 @@ public class FFT1dBenchmark {
 	private double[] result;
 	private ArrayList<Double> listToTransform;
 	private ArrayList<Double> listResult;
-	private double[][] multipleToTransform;
-	private double[][] multipleResult;
 	private int size=0;
 
 	@Setup
@@ -90,14 +89,9 @@ public class FFT1dBenchmark {
 		result = new double[size];
 		listToTransform = new ArrayList<>(size*2/3);
 		listResult = new ArrayList<>(size*2/3);
-		multipleToTransform = new double[NUM_THREADS][size];
-		multipleResult = new double[NUM_THREADS][size];
 		for(int i=0;i<size;i++){
 			toTransform[i] = i*0.01+Math.sin(i);
 			listToTransform.add(toTransform[i]);
-			for(int j=0;j<NUM_THREADS;j++){
-				multipleToTransform[j][i] = toTransform[i];
-			}
 		}
 	}
 
@@ -121,9 +115,9 @@ public class FFT1dBenchmark {
 	public double parallelInvocations() {
 		fft_test.doubleArrayFFT_SetDC2Zero_1D(toTransform, result);
 		IntStream.range(0, NUM_THREADS).parallel().forEach((int i)->{
-			fft_test.doubleArrayFFT_SetDC2Zero_1D(multipleToTransform[i], multipleResult[i]);
+			fft_test.doubleArrayFFT_SetDC2Zero_1D(toTransform, result);
 		});
-		return multipleResult[NUM_THREADS/2][size-1];
+		return result[size-1];
 	}
 
 }

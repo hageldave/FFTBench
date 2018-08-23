@@ -50,8 +50,8 @@ import com.github.hageldave.fftbenchmark.interfaces.FFT3D;
 
 @State(Scope.Benchmark)
 @BenchmarkMode(Mode.AverageTime)
-@Measurement(iterations = 3, time = 10, timeUnit = TimeUnit.SECONDS)
-@Warmup(iterations = 2, time = 10, timeUnit = TimeUnit.SECONDS)
+@Measurement(iterations = 2, time = 20, timeUnit = TimeUnit.SECONDS)
+@Warmup(iterations = 1, time = 20, timeUnit = TimeUnit.SECONDS)
 @Fork(value=1, jvmArgsAppend={"-Xmx6g","-Xms3g"})
 public class FFT3dBenchmark {
 
@@ -59,8 +59,8 @@ public class FFT3dBenchmark {
 	
 	@Param({
 		"127x128x129",
+		"256x256x256",
 		"400x300x200",
-		"512x512x512",
 	})
 	public String dims="";
 	

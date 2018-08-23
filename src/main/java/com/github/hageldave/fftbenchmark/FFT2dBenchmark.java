@@ -62,7 +62,7 @@ public class FFT2dBenchmark {
 		"1280x720",
 		"1920x1080",
 		"1087x1931",
-		"4928x3264"
+		"4928x3264",
 	})
 	public String dims="";
 	
@@ -80,7 +80,6 @@ public class FFT2dBenchmark {
 	private double[] result;
 	private double[][] toTransformNested;
 	private double[][] resultNested;
-	private double[][] multipleResults;
 
 	@Setup
 	public void setup(){
@@ -95,8 +94,6 @@ public class FFT2dBenchmark {
 		
 		toTransformNested = new double[height][width];
 		resultNested = new double[height][width];
-		
-		multipleResults = new double[NUM_THREADS][size];
 	}
 
 	@Benchmark
@@ -115,9 +112,9 @@ public class FFT2dBenchmark {
 	public double parallelInvocations() {
 		fft_test.doubleArrayFFT_SetDC2Zero_2D(toTransform, result, width, height);
 		IntStream.range(0, NUM_THREADS).parallel().forEach((int i)->{
-			fft_test.doubleArrayFFT_SetDC2Zero_2D(toTransform, multipleResults[i], width, height);
+			fft_test.doubleArrayFFT_SetDC2Zero_2D(toTransform, result, width, height);
 		});
-		return multipleResults[NUM_THREADS/2][size-1];
+		return result[size-1];
 	}
 
 }
