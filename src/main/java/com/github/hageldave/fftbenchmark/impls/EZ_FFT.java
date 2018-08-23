@@ -2,11 +2,14 @@ package com.github.hageldave.fftbenchmark.impls;
 
 import java.util.ArrayList;
 
+import org.apache.commons.math3.complex.Complex;
+
 import com.github.hageldave.fftbenchmark.interfaces.FFT1D;
 import com.github.hageldave.fftbenchmark.interfaces.FFT2D;
 import com.github.hageldave.fftbenchmark.interfaces.FFT3D;
 
 import hageldave.ezfftw.dp.FFT;
+import hageldave.ezfftw.dp.NativeRealArray;
 import hageldave.ezfftw.dp.RowMajorArrayAccessor;
 
 public class EZ_FFT implements FFT1D,FFT2D,FFT3D {
@@ -47,18 +50,18 @@ public class EZ_FFT implements FFT1D,FFT2D,FFT3D {
 
 	@Override
 	public void double2DArrayFFT_SetDC2Zero_2D(double[][] array, double[][] result, int width, int height) {
-		RowMajorArrayAccessor complex_r = new RowMajorArrayAccessor(width,height);
-		RowMajorArrayAccessor complex_i = new RowMajorArrayAccessor(width,height);
+		double[][] complex = new double[2][width*height];
 		FFT.fft(
-				(long[] indices)->array[(int)indices[1]][(int)indices[0]], 
-				complex_r.combineToComplexWriter(complex_i), 
+				(/*supply*/)->nativeRealFromNested(array, width, height), 
+				(NativeRealArray r, NativeRealArray i)->{r.get(0, complex[0]); i.get(0,complex[1]);},
 				width,
 				height
 		);
-		complex_r.array[0]=0;
+		complex[0][0]=0;
 		FFT.ifft(
-				complex_r.combineToComplexSampler(complex_i), 
-				(double v, long[] indices) -> result[(int)indices[1]][(int)indices[0]]=v,
+				(/*supply*/)->new NativeRealArray(width*height).set(complex[0]),
+				(/*supply*/)->new NativeRealArray(width*height).set(complex[1]),
+				(NativeRealArray r)->nativeRealToNested(r, result, width, height),
 				width,
 				height
 		);
@@ -95,6 +98,33 @@ public class EZ_FFT implements FFT1D,FFT2D,FFT3D {
 		);
 	}
 
+	private static NativeRealArray nativeRealFromNested(double[][] array, int width, int height){
+		NativeRealArray natarray = new NativeRealArray(width*height);
+		for(int row=0; row<height;row++)
+			natarray.set(row*width, array[row]);
+		return natarray;
+	}
+	
+	private static void nativeRealToNested(NativeRealArray natArray, double[][] array, int width, int height){
+		for(int row=0; row<height;row++)
+			natArray.get(row*width, array[row]);
+	}
+	
+	private static hageldave.ezfftw.fp.NativeRealArray nativeRealFromNested(float[][][] array, int width, int height, int depth){
+		int stride = width*height;
+		hageldave.ezfftw.fp.NativeRealArray natarray = new hageldave.ezfftw.fp.NativeRealArray(stride*depth);
+		for(int slice=0; slice<depth;slice++)
+			for(int row=0; row<height;row++)
+				natarray.set(slice*stride+row*width, array[slice][row]);
+		return natarray;
+	}
+	
+	private static void nativeRealToNested(hageldave.ezfftw.fp.NativeRealArray natArray, float[][][] array, int width, int height, int depth){
+		int stride = width*height;
+		for(int slice=0; slice<depth;slice++)
+			for(int row=0; row<height;row++)
+				natArray.get(slice*stride+row*width, array[slice][row]);
+	}
 
 
 }
