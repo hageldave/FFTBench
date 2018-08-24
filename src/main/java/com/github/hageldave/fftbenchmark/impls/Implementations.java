@@ -7,6 +7,7 @@ import com.github.hageldave.fftbenchmark.interfaces.FFT3D;
 public enum Implementations {
 	JTransforms(new JT_FFT(),new JT_FFT(), new JT_FFT()),
 	ezFFTW(new EZ_FFT(), new EZ_FFT(), new EZ_FFT()),
+	snglthrd_JT(new JT_FFT_SINGLETHREAD(),new JT_FFT_SINGLETHREAD(),new JT_FFT_SINGLETHREAD()),
 	;
 	
 	public final FFT1D fft1d;
