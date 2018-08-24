@@ -71,8 +71,8 @@ public class EZ_FFT implements FFT1D,FFT2D,FFT3D {
 	@Override
 	public void doubleArrayFFT_SetDC2Zero_3D(float[] array, float[] result, int width, int height, int depth) {
 		try(
-			hageldave.ezfftw.fp.NativeRealArray a1 = new hageldave.ezfftw.fp.NativeRealArray(width*height);
-			hageldave.ezfftw.fp.NativeRealArray a2 = new hageldave.ezfftw.fp.NativeRealArray(width*height);
+			hageldave.ezfftw.fp.NativeRealArray a1 = new hageldave.ezfftw.fp.NativeRealArray(width*height*depth);
+			hageldave.ezfftw.fp.NativeRealArray a2 = new hageldave.ezfftw.fp.NativeRealArray(width*height*depth);
 		){
 			a1.set(0, array);
 			hageldave.ezfftw.fp.FFTW_Guru.execute_split_r2c(a1, a1, a2, width,height,depth);
@@ -86,8 +86,8 @@ public class EZ_FFT implements FFT1D,FFT2D,FFT3D {
 	public void double3DArrayFFT_SetDC2Zero_3D(float[][][] array, float[][][] result, int width, int height,
 			int depth) {
 		try(
-				hageldave.ezfftw.fp.NativeRealArray a1 = new hageldave.ezfftw.fp.NativeRealArray(width*height);
-				hageldave.ezfftw.fp.NativeRealArray a2 = new hageldave.ezfftw.fp.NativeRealArray(width*height);
+				hageldave.ezfftw.fp.NativeRealArray a1 = new hageldave.ezfftw.fp.NativeRealArray(width*height*depth);
+				hageldave.ezfftw.fp.NativeRealArray a2 = new hageldave.ezfftw.fp.NativeRealArray(width*height*depth);
 		){
 			int stride = width*height;
 			for(int j=0;j<depth;j++)
