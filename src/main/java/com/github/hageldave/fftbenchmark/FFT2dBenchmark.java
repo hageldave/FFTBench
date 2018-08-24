@@ -68,7 +68,8 @@ public class FFT2dBenchmark {
 	
 	@Param({
 		"JTransforms",
-		"ezFFTW"
+		"snglthrd_JT",
+		"ezFFTW",
 	})
 	public String implementation="";
 	

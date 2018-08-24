@@ -2,13 +2,12 @@ package com.github.hageldave.fftbenchmark.impls;
 
 import java.util.ArrayList;
 
-import org.apache.commons.math3.complex.Complex;
-
 import com.github.hageldave.fftbenchmark.interfaces.FFT1D;
 import com.github.hageldave.fftbenchmark.interfaces.FFT2D;
 import com.github.hageldave.fftbenchmark.interfaces.FFT3D;
 
 import hageldave.ezfftw.dp.FFT;
+import hageldave.ezfftw.dp.FFTW_Guru;
 import hageldave.ezfftw.dp.NativeRealArray;
 import hageldave.ezfftw.dp.RowMajorArrayAccessor;
 
@@ -41,89 +40,66 @@ public class EZ_FFT implements FFT1D,FFT2D,FFT3D {
 	
 	@Override
 	public void doubleArrayFFT_SetDC2Zero_2D(double[] array, double[] result, int width, int height) {
-		double[] complex_r = new double[array.length];
-		double[] complex_i = new double[array.length];
-		FFT.fft(array, complex_r, complex_i, width,height);
-		complex_r[0]=0;
-		FFT.ifft(complex_r, complex_i, result, width,height);
+		try(
+			NativeRealArray a1 = new NativeRealArray(width*height);
+			NativeRealArray a2 = new NativeRealArray(width*height);
+		){
+			a1.set(0, array);
+			FFTW_Guru.execute_split_r2c(a1, a1, a2, width,height);
+			a1.set(0, 0);
+			FFTW_Guru.execute_split_c2r(a1, a2, a1, width,height);
+			a1.get(0, result);
+		};
 	}
 
 	@Override
 	public void double2DArrayFFT_SetDC2Zero_2D(double[][] array, double[][] result, int width, int height) {
-		double[][] complex = new double[2][width*height];
-		FFT.fft(
-				(/*supply*/)->nativeRealFromNested(array, width, height), 
-				(NativeRealArray r, NativeRealArray i)->{r.get(0, complex[0]); i.get(0,complex[1]);},
-				width,
-				height
-		);
-		complex[0][0]=0;
-		FFT.ifft(
-				(/*supply*/)->new NativeRealArray(width*height).set(complex[0]),
-				(/*supply*/)->new NativeRealArray(width*height).set(complex[1]),
-				(NativeRealArray r)->nativeRealToNested(r, result, width, height),
-				width,
-				height
-		);
+		try(
+			NativeRealArray a1 = new NativeRealArray(width*height);
+			NativeRealArray a2 = new NativeRealArray(width*height);
+		){
+			for(int i=0;i<height;i++)
+				a1.set(i*width, array[i]);
+			FFTW_Guru.execute_split_r2c(a1, a1, a2, width,height);
+			a1.set(0, 0);
+			FFTW_Guru.execute_split_c2r(a1, a2, a1, width,height);
+			for(int i=0;i<height;i++)
+				a1.get(i*width, result[i]);
+		}
 	}
 
 	@Override
 	public void doubleArrayFFT_SetDC2Zero_3D(float[] array, float[] result, int width, int height, int depth) {
-		float[] complex_r = new float[array.length];
-		float[] complex_i = new float[array.length];
-		hageldave.ezfftw.fp.FFT.fft(array, complex_r, complex_i, width,height,depth);
-		complex_r[0]=0;
-		hageldave.ezfftw.fp.FFT.ifft(complex_r, complex_i, result, width,height,depth);
+		try(
+			hageldave.ezfftw.fp.NativeRealArray a1 = new hageldave.ezfftw.fp.NativeRealArray(width*height);
+			hageldave.ezfftw.fp.NativeRealArray a2 = new hageldave.ezfftw.fp.NativeRealArray(width*height);
+		){
+			a1.set(0, array);
+			hageldave.ezfftw.fp.FFTW_Guru.execute_split_r2c(a1, a1, a2, width,height,depth);
+			a1.set(0, 0);
+			hageldave.ezfftw.fp.FFTW_Guru.execute_split_c2r(a1, a2, a1, width,height,depth);
+			a1.get(0, result);
+		};
 	}
 
 	@Override
 	public void double3DArrayFFT_SetDC2Zero_3D(float[][][] array, float[][][] result, int width, int height,
 			int depth) {
-		hageldave.ezfftw.fp.RowMajorArrayAccessor complex_r = new hageldave.ezfftw.fp.RowMajorArrayAccessor(width,height,depth);
-		hageldave.ezfftw.fp.RowMajorArrayAccessor complex_i = new hageldave.ezfftw.fp.RowMajorArrayAccessor(width,height,depth);
-		hageldave.ezfftw.fp.FFT.fft(
-				(long[] indices)->array[(int)indices[2]][(int)indices[1]][(int)indices[0]], 
-				complex_r.combineToComplexWriter(complex_i), 
-				width,
-				height,
-				depth
-		);
-		complex_r.array[0]=0;
-		hageldave.ezfftw.fp.FFT.ifft(
-				complex_r.combineToComplexSampler(complex_i), 
-				(float v, long[] indices) -> result[(int)indices[2]][(int)indices[1]][(int)indices[0]]=v,
-				width,
-				height,
-				depth
-		);
-	}
-
-	private static NativeRealArray nativeRealFromNested(double[][] array, int width, int height){
-		NativeRealArray natarray = new NativeRealArray(width*height);
-		for(int row=0; row<height;row++)
-			natarray.set(row*width, array[row]);
-		return natarray;
-	}
-	
-	private static void nativeRealToNested(NativeRealArray natArray, double[][] array, int width, int height){
-		for(int row=0; row<height;row++)
-			natArray.get(row*width, array[row]);
-	}
-	
-	private static hageldave.ezfftw.fp.NativeRealArray nativeRealFromNested(float[][][] array, int width, int height, int depth){
-		int stride = width*height;
-		hageldave.ezfftw.fp.NativeRealArray natarray = new hageldave.ezfftw.fp.NativeRealArray(stride*depth);
-		for(int slice=0; slice<depth;slice++)
-			for(int row=0; row<height;row++)
-				natarray.set(slice*stride+row*width, array[slice][row]);
-		return natarray;
-	}
-	
-	private static void nativeRealToNested(hageldave.ezfftw.fp.NativeRealArray natArray, float[][][] array, int width, int height, int depth){
-		int stride = width*height;
-		for(int slice=0; slice<depth;slice++)
-			for(int row=0; row<height;row++)
-				natArray.get(slice*stride+row*width, array[slice][row]);
+		try(
+				hageldave.ezfftw.fp.NativeRealArray a1 = new hageldave.ezfftw.fp.NativeRealArray(width*height);
+				hageldave.ezfftw.fp.NativeRealArray a2 = new hageldave.ezfftw.fp.NativeRealArray(width*height);
+		){
+			int stride = width*height;
+			for(int j=0;j<depth;j++)
+				for(int i=0;i<height;i++)
+					a1.set(j*stride+i*width, array[j][i]);
+			hageldave.ezfftw.fp.FFTW_Guru.execute_split_r2c(a1, a1, a2, width,height,depth);
+			a1.set(0, 0);
+			hageldave.ezfftw.fp.FFTW_Guru.execute_split_c2r(a1, a2, a1, width,height,depth);
+			for(int j=0;j<depth;j++)
+				for(int i=0;i<height;i++)
+					a1.get(j*stride+i*width, result[j][i]);
+		}
 	}
 
 

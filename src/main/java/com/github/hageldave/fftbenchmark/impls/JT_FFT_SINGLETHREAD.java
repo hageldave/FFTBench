@@ -6,8 +6,6 @@ import java.util.Arrays;
 
 import org.jtransforms.fft.DoubleFFT_1D;
 import org.jtransforms.fft.DoubleFFT_2D;
-import org.jtransforms.fft.DoubleFFT_3D;
-import org.jtransforms.fft.FloatFFT_1D;
 import org.jtransforms.fft.FloatFFT_3D;
 
 import com.github.hageldave.fftbenchmark.interfaces.FFT1D;
