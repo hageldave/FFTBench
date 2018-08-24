@@ -15,27 +15,32 @@ public class EZ_FFT implements FFT1D,FFT2D,FFT3D {
 	
 	@Override
 	public void doubleArrayFFT_SetDC2Zero_1D(double[] array, double[] result) {
-		double[] complex_r = new double[array.length];
-		double[] complex_i = new double[array.length];
-		FFT.fft(array, complex_r, complex_i, array.length);
-		complex_r[0]=0;
-		FFT.ifft(complex_r, complex_i, result, array.length);
+		try(
+			NativeRealArray a1 = new NativeRealArray(array.length);
+			NativeRealArray a2 = new NativeRealArray(array.length);
+		){
+			a1.set(0, array);
+			FFTW_Guru.execute_split_r2c(a1, a1, a2, array.length);
+			a1.set(0, 0);
+			FFTW_Guru.execute_split_c2r(a1, a2, a1, array.length);
+			a1.get(0, result);
+		};
 	}
 
 	@Override
 	public void doubleListFFT_SetDC2Zero_1D(ArrayList<Double> list, ArrayList<Double> result) {
-		RowMajorArrayAccessor complex_r = new RowMajorArrayAccessor(list.size());
-		RowMajorArrayAccessor complex_i = new RowMajorArrayAccessor(list.size());
-		FFT.fft(
-				(long[] indices) -> list.get((int)indices[0]), 
-				complex_r.combineToComplexWriter(complex_i), 
-				list.size()
-		);
-		complex_r.array[0]=0;
-		FFT.ifft(
-				complex_r.combineToComplexSampler(complex_i), 
-				(double v, long[] indices)->result.add(v),
-				list.size());
+		try(
+			NativeRealArray a1 = new NativeRealArray(list.size());
+			NativeRealArray a2 = new NativeRealArray(list.size());
+		){
+			for(int i=0; i<list.size();i++)
+				a1.set(i, list.get(i));
+			FFTW_Guru.execute_split_r2c(a1, a1, a2, list.size());
+			a1.set(0, 0);
+			FFTW_Guru.execute_split_c2r(a1, a2, a1, list.size());
+			for(int i=0; i<list.size();i++)
+				result.add(a1.get(i));
+		};
 	}
 	
 	@Override

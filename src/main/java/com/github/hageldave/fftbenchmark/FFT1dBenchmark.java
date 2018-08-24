@@ -59,12 +59,12 @@ public class FFT1dBenchmark {
 	private static final int NUM_THREADS = 16;
 	
 	@Param({
-		"512",
-		"1536",
+		"1024",
 		"16384",
 		"98304",
 		"589829",
-		"1000000"
+		"1000000",
+		"10000000"
 	})
 	public int dims=0;
 	

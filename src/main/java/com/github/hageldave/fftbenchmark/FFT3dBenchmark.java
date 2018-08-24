@@ -52,13 +52,13 @@ import com.github.hageldave.fftbenchmark.interfaces.FFT3D;
 @BenchmarkMode(Mode.AverageTime)
 @Measurement(iterations = 2, time = 20, timeUnit = TimeUnit.SECONDS)
 @Warmup(iterations = 1, time = 20, timeUnit = TimeUnit.SECONDS)
-@Fork(value=1, jvmArgsAppend={"-Xmx6g","-Xms3g"})
+@Fork(value=1, jvmArgsAppend={"-Xmx4g","-Xms3g"})
 public class FFT3dBenchmark {
 
 	private static final int NUM_THREADS = 4;
 	
 	@Param({
-		"127x128x129",
+		"100x120x140",
 		"256x256x256",
 		"400x300x200",
 	})
