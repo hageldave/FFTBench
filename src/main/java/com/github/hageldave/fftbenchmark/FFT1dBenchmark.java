@@ -31,7 +31,6 @@
 
 package com.github.hageldave.fftbenchmark;
 
-import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 
@@ -77,8 +76,6 @@ public class FFT1dBenchmark {
 	private FFT1D fft_test;
 	private double[] toTransform;
 	private double[] result;
-	private ArrayList<Double> listToTransform;
-	private ArrayList<Double> listResult;
 	private int size=0;
 
 	@Setup
@@ -87,11 +84,8 @@ public class FFT1dBenchmark {
 		fft_test = Implementations.valueOf(implementation).fft1d;
 		toTransform = new double[size];
 		result = new double[size];
-		listToTransform = new ArrayList<>(size*2/3);
-		listResult = new ArrayList<>(size*2/3);
 		for(int i=0;i<size;i++){
 			toTransform[i] = i*0.01+Math.sin(i);
-			listToTransform.add(toTransform[i]);
 		}
 	}
 
@@ -99,16 +93,6 @@ public class FFT1dBenchmark {
 	public double arrayInput() {
 		fft_test.doubleArrayFFT_SetDC2Zero_1D(toTransform, result);
 		return result[size-1];
-	}
-	
-	@Benchmark
-	public double listInput() {
-		try{
-			fft_test.doubleListFFT_SetDC2Zero_1D(listToTransform, listResult);
-			return listResult.get(size-1);
-		} finally {
-			listResult.clear();
-		}
 	}
 	
 	@Benchmark

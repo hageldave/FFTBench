@@ -52,7 +52,7 @@ import com.github.hageldave.fftbenchmark.interfaces.FFT3D;
 @BenchmarkMode(Mode.AverageTime)
 @Measurement(iterations = 2, time = 20, timeUnit = TimeUnit.SECONDS)
 @Warmup(iterations = 1, time = 20, timeUnit = TimeUnit.SECONDS)
-@Fork(value=1, jvmArgsAppend={"-Xmx4g","-Xms3g"})
+@Fork(value=1, jvmArgsAppend={"-Xmx6g","-Xms3g"})
 public class FFT3dBenchmark {
 
 	private static final int NUM_THREADS = 4;
@@ -78,8 +78,6 @@ public class FFT3dBenchmark {
 	private FFT3D fft_test;
 	private float[] toTransform;
 	private float[] result;
-	private float[][][] toTransformNested;
-	private float[][][] resultNested;
 
 	@Setup
 	public void setup(){
@@ -92,21 +90,12 @@ public class FFT3dBenchmark {
 		
 		toTransform = new float[size];
 		result = new float[size];
-		
-		toTransformNested = new float[depth][height][width];
-		resultNested = new float[depth][height][width];
 	}
 
 	@Benchmark
 	public double singleArrayInput() {
 		fft_test.doubleArrayFFT_SetDC2Zero_3D(toTransform, result, width, height, depth);
 		return result[size-1];
-	}
-	
-	@Benchmark
-	public double nestedArrayInput() {
-		fft_test.double3DArrayFFT_SetDC2Zero_3D(toTransformNested, resultNested, width, height, depth);
-		return resultNested[0][0][0];
 	}
 	
 	@Benchmark
